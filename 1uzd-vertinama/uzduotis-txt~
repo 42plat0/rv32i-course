@@ -1,0 +1,7 @@
+PUSH/POP uzduotis
+
+suskaiciuoti x, 
+kur x = A + B - C + 10 + D
+
+----
+issaugoti (push) kintamuosius i stack ir kitus naudojamas vertes, skaiciuojant pasiimti (pop) is stacko.
