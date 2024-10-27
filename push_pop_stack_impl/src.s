@@ -1,23 +1,31 @@
 .data
     A: .word 7
-    B: .word 13
-    C: .word 4
-    D: .word 1
+    B: .word 4
+    C: .word 1
+    D: .word 2
+    const: .word -10
+    
+#Issaugom returna registre ‘a’ 
+#Nueinam i funkcija ir pushinam DCBA
+#Popinam DCBA
+#Skaiciuojam
+#Loadinam i x1 issaugota ‘a’ reiksme
+#Gryztam 
+#Printinam 
+#Exitinam
 
 # x = A + B + C - 10 + D
 
 .text
     main:
         jal x1, calc_x
-        jal x1, print
-        jal x0, exit
-        
+        jal x0, print
     calc_x:
         # Store constant value
         addi a1, zero, -10
         
         # Store return to main (print func) adress
-        add t0, x1, zero
+        add a0, x1, zero
         jal x1, push
         
         # Store variables
@@ -41,8 +49,7 @@
         add a1, a1, t0
         
         # Restore return address to main
-        jal x1, pop
-        add x1, zero, t0
+        add x1, zero, a0
         jalr x0, x1, 0
         
     push:
@@ -59,8 +66,6 @@
         add a0, zero, a1
         li a7, 1
         ecall
-        
-        jalr x0, x1, 0
         
     exit:
         li a7, 10
