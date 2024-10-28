@@ -12,12 +12,12 @@
         addi a1, zero, -10
         
         # Store return to main adress
-        li t0, 64
+        li t0, 64 # 4 * 12 (3 ops for lw and jal to push) + 2 * 4 (li, jal) + 4 (jal math) + 4 (next after jal math)
         jal x1, push
         
         # Store variables
-        lw t0, D
-        jal x1, push
+        lw t0, D # 2 * 4
+        jal x1, push # 4
         lw t0, C
         jal x1, push
         lw t0, B
