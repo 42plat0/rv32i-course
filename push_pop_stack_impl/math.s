@@ -1,8 +1,8 @@
 .data
-    A: .word 7
-    B: .word 13
-    C: .word 4
-    D: .word 1
+    A: .word 255
+    B: .word 255
+    C: .word 255
+    D: .word 255
 
 # x = A + B + C - 10 + D
 
@@ -11,13 +11,13 @@
         # Store constant value
         addi a1, zero, -10
         
-        # Store return to main adress
-        li t0, 64 # 4 * 12 (3 ops for lw and jal to push) + 2 * 4 (li, jal) + 4 (jal math) + 4 (next after jal math)
+        # Store memory adress of function after math
+        addi t0, t0, print
         jal x1, push
         
         # Store variables
-        lw t0, D # 2 * 4
-        jal x1, push # 4
+        lw t0, D
+        jal x1, push
         lw t0, C
         jal x1, push
         lw t0, B
@@ -27,7 +27,8 @@
 
         # Calculate
         jal x1, math
-
+        
+        print:
         # Print result X
         add a0, zero, a1
         li a7, 1
