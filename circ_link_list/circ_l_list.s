@@ -6,6 +6,8 @@
         # Letter counter
         li t0, 0
         
+        # First letter - start
+        
         lui a6, %hi(start)
         # addi a6, %lo(start)
         
@@ -13,7 +15,8 @@
         jal x1, alloc_node
         addi a1, a1, 1
         
-        addi a6, a6, 4
+        # Add tail
+        addi a6, a6, 4 # Go to other byte
         
         addi a0, zero, 73
         jal x1, alloc_node
