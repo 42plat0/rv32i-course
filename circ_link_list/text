@@ -1,0 +1,6 @@
+# Save value (99) to memory from register
+    # To memory at address (0x20)
+    li a0, 0x20
+    li a1, 99
+    sw a1, 0(a0)
+
