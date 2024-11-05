@@ -1,10 +1,8 @@
 .data
-    A: .word 255
-    B: .word 255
-    C: .word 255
-    D: .word 255
-
-# x = A + B + C - 10 + D
+    A: .word 13
+    B: .word 1
+    C: .word 1
+    D: .word 5
 
 .text
     main:
@@ -51,7 +49,7 @@
         
         # Restore return address to main
         jal x1, pop
-        addi x1, t0, 0
+        add x1, zero, t0
         jalr x0, x1, 0
 
     push:
