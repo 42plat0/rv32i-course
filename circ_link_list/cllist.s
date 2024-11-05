@@ -43,6 +43,22 @@
         jal x1, alloc_node
         # Update letter count
         addi t2, t2, 1
+        
+        #####################
+        ## Update I's NEXT ##
+        #####################
+        
+        # Add node to head
+        jal x1, add_tail
+
+        ##############
+        ##### C ######
+        ##############
+        # Create next node
+        addi, t0, zero, 67
+        jal x1, alloc_node
+        # Update letter count
+        addi t2, t2, 1
         # Add node to head
         jal x1, add_tail
         
@@ -58,14 +74,22 @@
         
         # Save value
         sw t0, 0(a6)
+        
         # Go to next memory segment
         addi a6, a6, 4
+        
         # Save NEXT
-        sw t0, 0(a6)
+        # Get next node address
+        # addi t6, a6, 8
+        
+        sw a6, 0(a6)
+        
         # Go to next memory segment
         addi a6, a6, 4
         # Save PREV
-        sw t0, 0(a6)
+        sw a6, 0(a6)
+        
+
         # Go back to main
         jalr x0, x1, 0
         
@@ -82,20 +106,22 @@
         
         # Get -12
         li t5, -1
-        mul t6, a2, t5
+        mul t6, a2, t5 # 12 * -1
         
         # Calculate distance to head node from current node
         addi t3, t2, -1 # (Letter count - 1) * 2
         mul t1, t3, t6 # Distance
         
         # Head node
-        add a0, a1, t1
+        add a0, a1, t1 # Curr node address - Distance (from curr node to head)  
         # Add current at a1 to a0.next
         sw a1, 4(a0) # NEXT
         sw a1, 8(a0) # PREVIOUS
         # Add head node at a0 to prev at current 
         sw a0, 4(a1) # NEXT
-        sw a0, 8(a1) # PREVIOUS
+        
+        add t1, a1, t6 # Calc previous node address, each node points to one before except head
+        sw t1, 8(a1) # PREVIOUS
         
         # Go back to main
         jalr x0, x1, 0
@@ -108,6 +134,10 @@
         ecall
         
         lw a0, 12(t0)
+        li a7, 11
+        ecall
+        
+        lw a0, 24(t0)
         li a7, 11
         ecall
     
