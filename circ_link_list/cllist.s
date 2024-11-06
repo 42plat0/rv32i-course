@@ -3,8 +3,6 @@
 
 .text
     main:
-        # Letter count
-        li t2, 0
         # Block size per node
         addi a2, a2, 12
         
@@ -13,15 +11,15 @@
         
         addi a6, a6, -4
         
+        # Save head node address
+        addi a0, a6, 4
+        
         ##############
         ##### R ######
         ##############
         # Head node
         addi, t0, zero, 82
         jal x1, alloc_node
-        
-        # Update letter count
-        addi t2, t2, 1
         
         ##############
         ##### I ######
@@ -30,10 +28,12 @@
         # Create next node
         addi, t0, zero, 73
         jal x1, alloc_node
-        # Update letter count
-        addi t2, t2, 1
+
         # Add node to head
         jal x1, add_tail
+        
+        # Update previous node
+        jal x1, update_node
         
         ##############
         ##### S ######
@@ -41,26 +41,25 @@
         # Create next node
         addi, t0, zero, 83
         jal x1, alloc_node
-        # Update letter count
-        addi t2, t2, 1
-        
-        #####################
-        ## Update I's NEXT ##
-        #####################
-        
+
         # Add node to head
         jal x1, add_tail
-
+        
+        # Update previous node
+        jal x1, update_node
+        
         ##############
         ##### C ######
         ##############
         # Create next node
         addi, t0, zero, 67
         jal x1, alloc_node
-        # Update letter count
-        addi t2, t2, 1
+
         # Add node to head
         jal x1, add_tail
+        
+        # Update previous node
+        jal x1, update_node
         
         # Print list
         jal x1, print_list
@@ -79,17 +78,15 @@
         addi a6, a6, 4
         
         # Save NEXT
+        sw a6, 0(a6)
         # Get next node address
         # addi t6, a6, 8
-        
-        sw a6, 0(a6)
-        
+
         # Go to next memory segment
         addi a6, a6, 4
         # Save PREV
         sw a6, 0(a6)
         
-
         # Go back to main
         jalr x0, x1, 0
         
@@ -103,25 +100,30 @@
     # [prev]  4
     add_tail:
         ##### Add node - a1 - to head node - a0 #####
-        
         # Get -12
         li t5, -1
         mul t6, a2, t5 # 12 * -1
         
-        # Calculate distance to head node from current node
-        addi t3, t2, -1 # (Letter count - 1) * 2
-        mul t1, t3, t6 # Distance
+        # new_node.next -> head
+        sw a0, 4(a1)
+	    # new_node.prev -> previous_node (perrasys apatine eilute!)
+        add t0, a1, t6 # Previous node
+        sw t0, 8(a1)
+        # head_node.prev -> tail
+        sw a1, 8(a0)
         
-        # Head node
-        add a0, a1, t1 # Curr node address - Distance (from curr node to head)  
-        # Add current at a1 to a0.next
-        sw a1, 4(a0) # NEXT
-        sw a1, 8(a0) # PREVIOUS
-        # Add head node at a0 to prev at current 
-        sw a0, 4(a1) # NEXT
+        # Go back to main
+        jalr x0, x1, 0
         
-        add t1, a1, t6 # Calc previous node address, each node points to one before except head
-        sw t1, 8(a1) # PREVIOUS
+    update_node:
+        # Get -12
+        li t5, -1
+        mul t6, a2, t5 # 12 * -1
+        
+        # update previous node 
+        # previous_node.next -> tail
+        add t0, a1, t6
+        sw a1, 4(t0)
         
         # Go back to main
         jalr x0, x1, 0
@@ -136,10 +138,20 @@
         lw a0, 12(t0)
         li a7, 11
         ecall
-        
+
         lw a0, 24(t0)
         li a7, 11
         ecall
+
+        lw a0, 36(t0)
+        li a7, 11
+        ecall
+
+        lw a0, 48(t0)
+        li a7, 11
+        ecall
+        # Go back to main
+        jalr x0, x1, 0
     
     del_node:
         

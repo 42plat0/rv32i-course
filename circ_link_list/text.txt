@@ -1,0 +1,31 @@
+# Save value (99) to memory from register
+    # To memory at address (0x20)
+    li a0, 0x20
+    li a1, 99
+    sw a1, 0(a0)
+
+new_node.next -> head // Tail node visada i head
+head_node.prev -> tail  // Head node'as visada i tail
+(new_node - 4).next -> tail // Node'as pries tail visada i tail
+
+1. alloc new node (head/tail)
+   add tail
+	new_node.next -> head (sutampa tail su head), 
+	new_node.prev -> previous_node (perrasys apatine eilute!)
+	head_node.previous -> tail
+
+2. alloc new node (tail)
+   add tail  
+	 new_node.next -> head, 
+	 new_node.prev -> previous_node
+	head_node.prev -> tail
+   update previous node 
+	previous_node.next -> tail
+
+3. alloc new node (tail)
+   add tail  
+         new_node.next -> head, 
+	 new_node.prev -> previous_node
+	head_node.prev -> tail
+   update previous node 
+	previous_node.next -> tail
