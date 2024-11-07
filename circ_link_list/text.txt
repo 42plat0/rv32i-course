@@ -29,3 +29,8 @@ head_node.prev -> tail  // Head node'as visada i tail
 	head_node.prev -> tail
    update previous node 
 	previous_node.next -> tail
+
+
+4. del node
+   previous_node.next -> next node after deleted
+   next_node.prev -> previous node after deleted
