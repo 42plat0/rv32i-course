@@ -101,7 +101,7 @@
         
         # Go to next memory segment
         addi a6, a6, 4
-        
+
         # Save NEXT
         sw a6, 0(a6)
         # Get next node address
