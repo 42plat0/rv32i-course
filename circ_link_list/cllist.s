@@ -89,15 +89,53 @@
         # Update nodes
         jal x1, update_node_after_del
         
+        # Iterpti i istrinto node'o vieta kaip taila ir sulinkinti tinkamai
+        # Pvz. N1 -> N2 -> N3 -> N4
+        # Pvz. N1 -> *deleted* -> N3 -> N4
+        # Tai. N1 -> *N5* -> N3 -> N4
+        # Tai. N1 -> N5 -> N3 -> N4 -> *N6*
+        ######################################
+        # Problema su tailo addinimu
+        ##############
+        ##### C ######
+        ##############
+        
+        # Load starting address of data at 0xA
+        lui a6, %hi(START)
+        # add a6, %lo(START)
+        
+        addi a6, a6, -4
+        
+        # Create next node
+        addi, t0, zero, 63
+        jal x1, alloc_node
+        
+        # Add node to head
+        jal x1, add_tail
+        
+        # Update previous node
+        jal x1, update_node_before_tail
+        
+        # Exit
         jal x0, exit
     
     alloc_node:
+        # Ieskoti tuscios vietos kuri prasideda su 0
+        
         # Go to next memory segment
         addi a6, a6, 4
-        add a1, a6, zero # Save current address of node
+        
+        # Load current mem address value
+        lw t1, 0(a6)
+        
+        # Checks if current memory block is empty
+        bnez t1, alloc_node
+        
+        # Save current address of node
+        add a1, a6, zero 
         
         # Save value
-        sw t0, 0(a6)
+        sb t0, 0(a6)
         
         # Go to next memory segment
         addi a6, a6, 4
@@ -111,6 +149,8 @@
         addi a6, a6, 4
         # Save PREV
         sw a6, 0(a6)
+        
+        # Issaugoti naujo NODe addressa i S0
         
         # Go back to main
         jalr x0, x1, 0
