@@ -1,0 +1,11 @@
+print head_node
+
+go to head_node.next
+
+print that
+
+go to head_node.next.next
+
+print that
+
+etc..

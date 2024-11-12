@@ -1,0 +1,22 @@
+delete specified node:
+	// Save nodes to update their values at locations
+	save previous node: 	previous_node = `del_node.previous`
+	save next node:     	next_node = `del_node.next`
+
+update saved node addresses
+	previous_node.next -> next_node
+	next_node.previous -> previous_node
+
+add new node into empty space
+
+add tail
+	t1 - head
+	t2 - tail
+
+	tail = t1.prev
+	head = t2.next
+
+	change current tail next to newly added node
+	change head previous to newly added node
+	
+	
