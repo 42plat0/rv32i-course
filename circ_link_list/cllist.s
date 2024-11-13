@@ -2,17 +2,16 @@
     START: .word 0
 .text
     main:
-        # Block size per node
-        addi a2, a2, 12
-        
         # Load starting address of data at 0xA
         lui a6, %hi(START)
         #addi a6, a6, %lo(START)
         
-        addi a6, a6, -4
+        # Go back a byte
+        # And increment a6 by 1 searching for empty memory space to write to
+        addi a6, a6, -1
         
         # Save head node address
-        addi a0, a6, 4
+        addi a0, a6, 1
         
         ##############
         ##### R ######
@@ -74,18 +73,20 @@
 
         # Load head at 0xA because print_list overwrote it
         lui a6, %hi(START)
-        
+        addi a6, a6, -1
+
         # Save head node address
-        add a0, a6, zero
+        addi a0, a6, 1
         
         # Choose node to delete and store to a1
-        addi a1, a0, 12
+        # Choosing by storing address of head.next (2nd node = V)
+        lw a1, 1(a0)
         
-        # Save addresses of .next & .prev of to be deleted node 
+        # Save node_to_delete.next & node_to_delete.prev addresses 
         # And delete it
         jal x1, del_node
 
-        
+
         ##############
         ##### V ######
         ##############
@@ -105,7 +106,7 @@
         
     alloc_node:        
         # Go to next memory segment
-        addi a6, a6, 4
+        addi a6, a6, 1
         
         # Load current mem address value
         lw t1, 0(a6)
@@ -124,7 +125,7 @@
         sb t0, 0(a6)
         
         # Go to next memory segment
-        addi a6, a6, 4
+        addi a6, a6, 1
 
         # Save NEXT
         sw a1, 0(a6)
@@ -135,71 +136,70 @@
         # Save PREV
         sw a1, 0(a6)
         
-        
         # Go back to main
         jalr x0, x1, 0
         
     add_tail:
         ###################
         #### Add nodes ####
-        # node count = 2
-        # 12 byte blocks for each
-        # 24 bytes in total
-        # [value] 4 
-        # [next]  4
-        # [prev]  4
         ##### Add node - a1 - to head node - a0 #####
 
         # LOAD PREVIOUS TAIL AND HEAD
         # load tail at head's previous
-        lw t1, 8(a0) # t1 = head.previous
+        lw t1, 5(a0) # t1 = head.previous
         # load head at tail's previous
-        lw t2, 4(t1) # t2 = tail.next
+        lw t2, 1(t1) # t2 = tail.next
         
         # UPDATE NEW_NODE'S PREV AND NEXT
         # new_node.next -> head
-        sw t2, 4(a1)
+        sw t2, 1(a1)
 	    # new_node.prev -> previous_tail_node 
-        sw t1, 8(a1)
+        sw t1, 5(a1)
         
         # UPDATE HEAD'S PREV TO NEW_NODE
         # head_node.prev -> tail
-        sw a1, 8(a0)
+        sw a1, 5(a0)
         
         # UPDATE BEFORE-TAIL.NEXT AND HEAD.PREVIOUS
         # Save before-tail.next -> new_node
-        sw a1, 4(t1)
+        sw a1, 1(t1)
         # Save head.previous -> new_node
-        sw a1, 8(t2)
+        sw a1, 5(t2)
         
         # Return
         jalr x0, x1, 0
     
     del_node:
+        # Deleted node contains addresses to next and previous node
+        # So we use these addresses to wire nodes in between
+        # !Does not account for head node being deleted
+        
         # save previous node: 	previous_node = `del_node.previous`
         # s1 = deleted_node.previous
         # save next node:     	next_node = `del_node.next`
         # s2 = deleted_node.next
         
-        # SAVE NODE ADDRESSES
+        # SAVE BETWEEN NODE ADDRESSE THAT ARE NEXT TO DELETED NODE
 
         # Load deleted_node.previous
-        lw s1, 4(a1)
+        lw s1, 1(a1)
         # Load deleted_node.next
-        lw s2, 8(a1)
+        lw s2, 5(a1)
 
         # DELETE NODE
-        sw zero, 0(a1)
-        sw zero, 4(a1)
-        sw zero, 8(a1)
+        sb zero, 0(a1)
+        sw zero, 1(a1)
+        sw zero, 5(a1)
+        
+        # CONNECT NODES IN BETWEEN
         
         # UPDATE NODES
         # Update next node's previous to s2
-        addi t1, s1, 8
+        addi t1, s1, 5
         sw s2, 0(t1)
         
         # Update prev node's next to s1
-        addi t1, s2, 4
+        addi t1, s2, 1
         sw s1, 0(t1)
         
         # Return
@@ -216,25 +216,25 @@
         ecall
         
         # save head.next
-        addi t1, s3, 4
+        addi t1, s3, 1
         
         traverse_list:
             # Value address of node
             lw t2, 0(t1)
             
+            # Print ascii char at address
             lw a0, 0(t2)
             li a7, 11
             ecall 
             
             # Get .next value of current node
-            addi t1, t2, 4
+            addi t1, t2, 1
             
             # Check what next address is
             lw t3, 0(t1)
             
             # Loop again, if head node hasn't been reached
             bne t3, s3, traverse_list
-        
         
         # Go back to main
         jalr x0, x1, 0

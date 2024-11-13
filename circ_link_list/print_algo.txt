@@ -9,3 +9,8 @@ go to head_node.next.next
 print that
 
 etc..
+
+headnode = 0xA
+
+headnode.next = headnode + 4
+
