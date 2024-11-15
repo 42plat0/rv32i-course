@@ -179,8 +179,12 @@
         # save next node:     	next_node = `del_node.next`
         # s2 = deleted_node.next
         
+        # Return -1
+        addi s4, zero, -1
+        # Exit program with code 1
+        beq a1, zero, error_exit
+        
         # SAVE BETWEEN NODE ADDRESSE THAT ARE NEXT TO DELETED NODE
-
         # Load deleted_node.previous
         lw s1, 1(a1)
         # Load deleted_node.next
@@ -235,13 +239,32 @@
             # Needed to check whether 
             # we reached starting node
             addi t1, t3, 0
-
+            
+            # ERROR HANDLING
+            add t2, a0, zero
+            # Return -1
+            addi s4, t2, -1
+            
+            # Exit program with code 1
+            beq t2, zero, error_exit
+            
+            # Save bytes written node when successful
+            # ????
             # Loop again, if printed_node is not starting point (tail)
             bne t1, s3, traverse_list
+        
+
         
         # Go back to main
         jalr x0, x1, 0
     
+    error_exit:
+
+        
+        li a0, 1
+        li a7, 93
+        ecall
+        
     exit:
         li a7, 10
         ecall
