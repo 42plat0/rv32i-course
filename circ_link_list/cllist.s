@@ -221,6 +221,10 @@
         # save tail value address
         add t1, s3, zero
         
+        # instantiate written byte count 
+        add s5, zero, zero
+        add t4, s5, zero
+        
         traverse_list:
             # get curr_node.next value (address) at t1
             addi t1, t1, 1
@@ -229,7 +233,7 @@
             lw t3, 0(t1)
             
             # Print ascii char at t3
-            lw a0, 0(t3)
+            lb a0, 0(t3)
             li a7, 11
             ecall 
             
@@ -249,18 +253,18 @@
             beq t2, zero, error_exit
             
             # Save bytes written node when successful
-            # ????
+            addi t4, t4, 1
+            
             # Loop again, if printed_node is not starting point (tail)
             bne t1, s3, traverse_list
         
-
+        # Return bytes written in total
+        add s5, s5, t4
         
         # Go back to main
         jalr x0, x1, 0
     
     error_exit:
-
-        
         li a0, 1
         li a7, 93
         ecall
