@@ -206,35 +206,38 @@
         jalr x0, x1, 0
         
     print_list:
-        # PRINT HEAD NODE AND TRAVERSE THE LIST        
-        # save head address
-        add s3, a0, zero
+        # PRINT NODE VAL BY TRAVERSING THE LIST
+        # LOAD HEAD FROM TAIL.NEXT
+        # LOAD ADDRESS AT .NEXT AND LOAD ASCII VALUE
+        # AT THAT ADDRESS
+                
+        # get head.previous (-> tail) tail value address
+        lw s3, 5(a0)
         
-        # print head's value
-        lw a0, 0(s3)
-        li a7, 11
-        ecall
-        
-        # save head.next
-        addi t1, s3, 1
+        # save tail value address
+        add t1, s3, zero
         
         traverse_list:
-            # Value address of node
-            lw t2, 0(t1)
+            # get curr_node.next value (address) at t1
+            addi t1, t1, 1
             
-            # Print ascii char at address
-            lw a0, 0(t2)
+            # load node value at t1.next
+            lw t3, 0(t1)
+            
+            # Print ascii char at t3
+            lw a0, 0(t3)
             li a7, 11
             ecall 
             
-            # Get .next value of current node
-            addi t1, t2, 1
-            
-            # Check what next address is
-            lw t3, 0(t1)
-            
-            # Loop again, if head node hasn't been reached
-            bne t3, s3, traverse_list
+            # save curr_node
+            # and increment when loop starts
+            # to get curr_node.next
+            # Needed to check whether 
+            # we reached starting node
+            addi t1, t3, 0
+
+            # Loop again, if printed_node is not starting point (tail)
+            bne t1, s3, traverse_list
         
         # Go back to main
         jalr x0, x1, 0

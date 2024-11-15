@@ -1,0 +1,17 @@
+- del_node():
+
+	return:
+  		(-1) if the tobe-deleted node isn't found or
+  		list head node address, otherwise.
+- print_list():
+
+	return:
+  		(-1) at first print fail or the number of bytes written at last
+- alloc_node():
+
+	return:
+  		starting address of the allocated node
+- add_tail():
+
+	return:
+  		none
