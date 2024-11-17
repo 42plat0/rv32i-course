@@ -206,6 +206,9 @@
         addi t1, s2, 1
         sw s1, 0(t1)
         
+        # Return head node on success
+        add s0, a0, zero
+        
         # Return
         jalr x0, x1, 0
         
@@ -221,8 +224,8 @@
         # save tail value address
         add t1, s3, zero
         
-        # instantiate written byte count 
-        add s5, zero, zero
+        # instantiate written byte count to return
+        add s0, zero, zero
         add t4, s5, zero
         
         traverse_list:
@@ -246,8 +249,9 @@
             
             # ERROR HANDLING
             add t2, a0, zero
+            
             # Return -1
-            addi s4, t2, -1
+            addi s0, zero, -1
             
             # Exit program with code 1
             beq t2, zero, error_exit
@@ -259,7 +263,7 @@
             bne t1, s3, traverse_list
         
         # Return bytes written in total
-        add s5, s5, t4
+        add s0, s0, t4
         
         # Go back to main
         jalr x0, x1, 0

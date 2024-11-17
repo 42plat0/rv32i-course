@@ -15,3 +15,6 @@
 
 	return:
   		none
+
+Functions (returning values) must be always checked for error. 
+if returns error value  the program must  terminate w
