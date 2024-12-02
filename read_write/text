@@ -1,0 +1,31 @@
+.section .data
+.section .text
+
+download VMBox on wins
+
+tut: https://gist.github.com/Frank-Buss/aa6aa7d4907335e4a529e8cf3e82f47e
+
+rv-tool-chain-gnu: https://github.com/riscv-collab/riscv-gnu-toolchain
+
+commands:
+  riscv64-unknown-elf-as -o skip_num.o skip_num_print_rest.s
+  riscv64-unknown-elf-ld -o skip_num skip_num.o
+  ./skip_num
+
+
+a0-a5 syscall parametrai
+a0 return rezultatas
+
+isikelti .txt faila i atminti
+openat (56, 57)
+.asciz = .string (z reiskia, kad yra null terminatorius)
+deti i stack pointeri faila ( -1024) 
+
+openat 
+	- a0 -100, nurodom kad yra pavadinimas esamoj direktorijoj o ne path'as i faila
+
+read
+	- a0 grazina nuskaitytu baitu skaiciu (jei 0, baigesi failas) arba neigiama skaiciu su error code'u
+	
+qemu -strace [filename] - ismeta dumpa su sys call rezultatais
+-strace -d in_asm, cpu [filename]
