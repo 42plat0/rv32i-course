@@ -26,10 +26,6 @@ _start:
     mv s1, a0                  # Save file descriptor in t0
 
 read_loop:
-    # jal x1, count_cases
-    # jal x1, count_sentences
-    # jal x1, count_words
-    
     # Read from file
     mv a0, s1                  # File descriptor
     mv a1, s0                  # Buffer address
@@ -37,9 +33,15 @@ read_loop:
     li a7, 63                  # Syscall number for read
     ecall
 
+    
     bltz a0, read_error        # Exit if read failed
     beqz a0, close_file        # End of file (read 0 bytes)
     mv a2,a0                   # Bytes to print
+
+    jal x1, count_cases
+    # jal x1, count_sentences
+    # jal x1, count_words
+
     # Write to stdout
     li a0, 1                   # Stdout file descriptor
     mv a1, s0                  # Buffer address
@@ -68,16 +70,17 @@ count_cases:
 
     loop_cases:
         # check for cases
-        lb t4, 0(sp)
+        lb t4, 0(t1)
         
         beqz t4, print_cases
 
-        addi sp, sp, 1
+        addi t1, t1, 1
         
         addi t0, t4, -65
 
-        # addi t5, zero, 0 # Checker Upper case start
-        beqz t0, add_ucase_count
+        blt t0, zero, loop_cases
+
+        beqz t0, add_ucase_count # Check Upper case start
 
         addi t5, zero, 25 # Upper case end
         ble t0, t5, add_ucase_count
