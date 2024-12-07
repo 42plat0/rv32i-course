@@ -74,11 +74,11 @@ count_cases:
         
         beqz t4, print_cases
 
-        addi t1, t1, 1
+        addi t1, t1, 1 # go to next letter
         
-        addi t0, t4, -65
+        addi t0, t4, -65 # subtract first Uppercase letter ascii code
 
-        blt t0, zero, loop_cases
+        blt t0, zero, loop_cases # Is not a letter
 
         beqz t0, add_ucase_count # Check Upper case start
 
@@ -86,8 +86,10 @@ count_cases:
         ble t0, t5, add_ucase_count
 
         addi t0, t4, -97
-        # addi t5, zero, 97 # Checker Lower case start
-        beqz t0, add_lcase_count
+        
+        blt t0, zero, loop_cases # Is not a letter
+        
+        beqz t0, add_lcase_count # Checker Lower case start
 
         addi t5, zero, 25 # Lower case end
         ble t0, t5, add_lcase_count
