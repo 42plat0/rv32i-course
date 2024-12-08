@@ -16,8 +16,8 @@ clean:
 gdb:
 	riscv64-unknown-elf-gdb
 
-memdump:
+memmdump:
 	qemu-riscv64-static -strace read_file
 
-commemdump:
+cmemmdump:
 	qemu-riscv64-static -strace -d in_asm,cpu  read_file

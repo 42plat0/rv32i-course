@@ -1,12 +1,19 @@
 .section .data
+.align 4
+
 filename:
-    .asciz "text_eng.txt"          # File to read
+    .asciz "text.txt"          # File to read
+new_filename:
+    .asciz "c_text.txt"
+
 
 error_msg:
     .asciz "Error: Read failed.\n"
 
 newline:
     .asciz "\n"
+
+
 
 .section .text
 .globl _start
@@ -23,7 +30,8 @@ _start:
     li a7, 56                  # Syscall number for openat
     ecall
     bltz a0, exit_error        # Exit if open failed
-    mv s1, a0                  # Save file descriptor in t0
+    mv s1, a0                  # Save file descriptor in s1
+
 
 read_loop:
     # Read from file
@@ -33,23 +41,94 @@ read_loop:
     li a7, 63                  # Syscall number for read
     ecall
 
-    
     bltz a0, read_error        # Exit if read failed
     beqz a0, close_file        # End of file (read 0 bytes)
-    mv a2,a0                   # Bytes to print
+    mv s2,a0                   # Bytes to print
+    
 
-    jal x1, count_cases
+    jal x1, write_new
+    # jal x1, change_letters
+    # jal x1, count_cases
     # jal x1, count_sentences
     # jal x1, count_words
 
     # Write to stdout
     li a0, 1                   # Stdout file descriptor
     mv a1, s0                  # Buffer address
+    mv a2, s2
     li a7, 64                  # Syscall number for write
     ecall
     bltz a0, write_error       # Exit if write failed
 
     j read_loop                # Continue reading
+
+write_new:
+    # Create new file
+    li a0, -100                # AT_FDCWD
+    la a1, new_filename        # File name
+    li a2, 2                   # O_WRONLY | O_CREAT
+    li a7, 56                  # Syscall number for openat
+    ecall
+
+    mv t2, s0 # Get buffer
+    
+    mv t1, a0 # Save file descriptor
+
+    bltz a0, exit_error        # Exit if open failed
+    
+
+    check_letters:
+        lb t4, 0(t1)
+
+        addi t1, t1, 1
+        addi t2, t2, 1
+
+        addi t3, zero, 71 # G letter checker
+        addi t5, zero, 103 # g letter checker
+
+        beq t4, t3, g_upp_case
+        beq t4, t5, g_lo_case
+        
+        bnez t4, loop_change
+    
+    
+    # Write to file
+    mv a0, t1                  # File descriptor
+    mv a1, s0                  # Buffer address
+    mv a2, s2                  # Bytes to print
+    li a7, 64                  # Syscall number for write
+    ecall
+
+    bltz a0, write_error       # Exit if write failed
+
+    jalr x0, x1, 0
+
+
+change_letters:
+    mv t1, sp
+    addi t2, zero, 0
+
+    g_upp_case:
+
+
+    g_lo_case:
+
+    loop_change:
+        lb t4, 0(t1)
+
+        addi t1, t1, 1
+        addi t2, t2, 1
+
+        addi t3, zero, 71 # G letter checker
+        addi t5, zero, 103 # g letter checker
+
+        beq t4, t3, g_upp_case
+        beq t4, t5, g_lo_case
+        
+        bnez t4, loop_change
+
+    jalr x0, x1, 0
+
 
 ucase_msg:
     .asciz "Uppercase:\n"
@@ -83,7 +162,8 @@ count_cases:
         beqz t0, add_ucase_count # Check Upper case start
 
         addi t5, zero, 25 # Upper case end
-        ble t0, t5, add_ucase_count
+
+        ble t0, t5, add_ucase_count # Is not a letter
 
         addi t0, t4, -97
         
@@ -182,8 +262,6 @@ count_words:
     mv t1, zero
 
     jalr x0, x1, 0
-
-
 
 
 close_file:
