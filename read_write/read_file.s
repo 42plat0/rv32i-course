@@ -3,7 +3,7 @@ filename:
     .asciz "text.txt"          # File to read
 
 sentence_msg:
-    .asciz "\nSentences:"
+    .asciz "\nSentences: "
 
 newline:
     .asciz "\n"
@@ -86,12 +86,12 @@ count_sentences:
         # Write to stdout
         li a0, 1                   # Stdout file descriptor
         la a1, sentence_msg        # Message address
-        li a2, 15                  # Message length
+        li a2, 12                  # Message length
         li a7, 64                  # Syscall number for write
         ecall
 
-
-        addi t2, t2, 48
+        
+        addi t2, t2, 48 # Get num ascii code
         addi sp, sp, -4
         sw t2, 0(sp)
 
