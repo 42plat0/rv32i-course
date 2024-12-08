@@ -45,7 +45,8 @@ read_loop:
     beqz a0, close_file        # End of file (read 0 bytes)
     mv s2,a0                   # Bytes to print
     
-
+    jal x1, open_new
+    jal x1, change_letters
     jal x1, write_new
     # jal x1, change_letters
     # jal x1, count_cases
@@ -62,38 +63,26 @@ read_loop:
 
     j read_loop                # Continue reading
 
-write_new:
+open_new:
     # Create new file
     li a0, -100                # AT_FDCWD
     la a1, new_filename        # File name
-    li a2, 2                   # O_WRONLY | O_CREAT
+    li a2, 2                   # O_WRONLY
     li a7, 56                  # Syscall number for openat
     ecall
 
-    mv t2, s0 # Get buffer
+    # mv t1, s0 # Get buffer
     
-    mv t1, a0 # Save file descriptor
+    # mv t2, a0 # Save file descriptor
 
     bltz a0, exit_error        # Exit if open failed
-    
 
-    check_letters:
-        lb t4, 0(t1)
+    jalr x0, x1, 0
 
-        addi t1, t1, 1
-        addi t2, t2, 1
-
-        addi t3, zero, 71 # G letter checker
-        addi t5, zero, 103 # g letter checker
-
-        beq t4, t3, g_upp_case
-        beq t4, t5, g_lo_case
-        
-        bnez t4, loop_change
-    
+write_new:
     
     # Write to file
-    mv a0, t1                  # File descriptor
+    # mv a0, t2                  # File descriptor
     mv a1, s0                  # Buffer address
     mv a2, s2                  # Bytes to print
     li a7, 64                  # Syscall number for write
@@ -105,27 +94,45 @@ write_new:
 
 
 change_letters:
-    mv t1, sp
+    mv t1, s0
     addi t2, zero, 0
+        
+    beq zero, zero, check_letters
 
+    # sb t3, 1(s0) # Overwrite new letter
+    # li t3, 71
     g_upp_case:
+        li t3, 80 # P
 
+        addi t1, t1, -1
+
+        sb t3, 0(t1)
+
+        beq zero, zero, check_letters
 
     g_lo_case:
+        li t3, 112 # p
 
-    loop_change:
+        addi t1, t1, -1
+
+        sb t3, 0(t1)
+        
+        beq zero, zero, check_letters
+
+    check_letters:
         lb t4, 0(t1)
 
-        addi t1, t1, 1
-        addi t2, t2, 1
+        addi t1, t1, 1 # Advance pointer
+        
+        addi t2, t2, 1 # Count letter position
 
         addi t3, zero, 71 # G letter checker
-        addi t5, zero, 103 # g letter checker
-
         beq t4, t3, g_upp_case
-        beq t4, t5, g_lo_case
         
-        bnez t4, loop_change
+        addi t3, zero, 103 # g letter checker
+        beq t4, t3, g_lo_case
+        
+        bnez t4, check_letters
 
     jalr x0, x1, 0
 
