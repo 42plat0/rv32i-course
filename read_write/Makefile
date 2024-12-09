@@ -1,6 +1,7 @@
 run: read_file
-	qemu-riscv64 ./read_file
-
+	# qemu-riscv64 ./read_file
+	./read_file
+	
 qemu: read_file
 	qemu-riscv64-static -g 1234 read_file
 
