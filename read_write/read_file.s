@@ -1,7 +1,7 @@
 .section .rodata
 .align 4
 filename:
-    .asciz "text.txt"          # File to read
+    .asciz "text_eng.txt"          # File to read
 
 sentence_msg:
     .asciz "\nSentences: "
@@ -79,9 +79,8 @@ read_loop:
     # Save counts as ascii characters
     mv t0, sp           # Get stack pointer
     li a1, 2            # Informs save_count that we're updating values
-    li a2, 5            # Length for each letter [L][:][hundreds][tens][ones]
-    li t2, 25
-    li s3, 0
+
+    li t2, 52                           # Letter count - 2 (less than)
 
     update_count_values:
         addi t0, t0, 2              # Get count for letter
@@ -89,15 +88,36 @@ read_loop:
 
         jal x1, save_count
 
-        addi s3, s3, 1              # Keep track of letter count already converted
+        addi t2, t2, -1              # Keep track of letter count already converted
         
-        blt s3, t2, update_count_values
+        bgt t2, zero, update_count_values
+    
+    li t2, 27
+    li s3, 0
+
+    print:        
+        # Write to stdout
+        li a0, 1                   # Stdout file descriptor
+        la a1, newline             # Message address
+        li a2, 1                   # Message length
+        li a7, 64                  # Syscall number for write
+        ecall
         
-    li a0, 1                   # Stdout file descriptor
-    mv a1, sp                  # Buffer address
-    li a2, 120
-    li a7, 64                  # Syscall number for write
-    ecall
+        li a0, 1                   # Stdout file descriptor
+        mv a1, sp                  # Buffer address
+        li a2, 5
+        li a7, 64                  # Syscall number for write
+        ecall
+
+
+        addi sp, sp, 5
+        
+        lb t1, 0(sp)
+
+        addi s3, s3, 1
+
+        bgt t1, zero, print
+
     # TO print result we need to define a2 to 5
     # Iterate through letters in 5's
 
@@ -169,19 +189,29 @@ count_letters:
     beq zero, zero, loop_letters  # Go back to loop
 
     add_upc_letter_count:
+        addi t0, t0, 26             # Uppercase letters are above lower
         mul t0, t0, a0              # Get letter place in array 
 
-        add t2, sp, t0             # Get letter in place
+        add t2, sp, t0              # Get letter in place
         add t2, t2, a1              # Get count number
+
         lb t3, 0(t2)                # Load value
 
         addi t3, t3, 1              # Increment letters count value
         sb t3, 0(t2)                # Save it back
 
-        beqz zero, loop_letters  # Go back to loop
+        beqz zero, loop_letters     # Go back to loop
     
-    # add_lc_letter_count:
-    #     addi t3, t3, 1              # LoC counter
+    add_lc_letter_count:
+        mul t0, t0, a0              # Get letter place in array 
+
+        add t2, sp, t0              # Get letter in place
+        add t2, t2, a1              # Get count number
+
+        lb t3, 0(t2)                # Load value
+
+        addi t3, t3, 1              # Increment letters count value
+        sb t3, 0(t2)                # Save it back
     
     loop_letters:                   # Iterate letters
         lb t4, 0(t1)                # Load letter
@@ -197,12 +227,12 @@ count_letters:
         addi t5, zero, 25           # Upper case end
         ble t0, t5, add_upc_letter_count # Is in boundary of upper case letters
 
-        # addi t0, t4, -97                # Lowercase
-        # blt t0, zero, loop_letters    # Is not a letter
+        addi t0, t4, -97                # Lowercase
+        blt t0, zero, loop_letters    # Is not a letter
 
-        # beqz t0, add_lc_letter_count    # Checker Lower case start
-        # addi t5, zero, 25           # Lower case end
-        # ble t0, t5, add_lc_letter_count # Is in boundary of lower case letters
+        beqz t0, add_lc_letter_count    # Checker Lower case start
+        addi t5, zero, 25           # Lower case end
+        ble t0, t5, add_lc_letter_count # Is in boundary of lower case letters
 
         bnez t4, loop_letters
 
@@ -234,25 +264,25 @@ add_letters_to_buffer:
         addi t1, t1, -1
         bgt t1, t2, uppercase
     
-    # li t1, 122                  # Start z
-    # li t2, 96                   # End   a - 1
+    li t1, 122                  # Start z
+    li t2, 96                   # End   a - 1
 
-    # lowercase:
-    #     addi sp, sp, -1         # Save 3 bytes for storing counts
-    #     sb zero, 0(sp)
-    #     addi sp, sp, -1
-    #     sb zero, 0(sp)
-    #     addi sp, sp, -1
-    #     sb zero, 0(sp)
+    lowercase:
+        addi sp, sp, -1         # Save 3 bytes for storing counts
+        sb zero, 0(sp)
+        addi sp, sp, -1
+        sb zero, 0(sp)
+        addi sp, sp, -1
+        sb zero, 0(sp)
         
-    #     addi sp, sp, -1
-    #     sb t3, 0(sp)            # Save : for display
+        addi sp, sp, -1
+        sb t3, 0(sp)            # Save : for display
 
-    #     addi sp, sp, -1
-    #     sb t1, 0(sp)            # Save letter
+        addi sp, sp, -1
+        sb t1, 0(sp)            # Save letter
 
-    #     addi t1, t1, -1
-    #     bgt t1, t2, lowercase
+        addi t1, t1, -1
+        bgt t1, t2, lowercase
 
 
     jalr x0, x1, 0
