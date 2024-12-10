@@ -1,7 +1,7 @@
 .section .rodata
 .align 4
 filename:
-    .asciz "text_eng.txt"          # File to read
+    .asciz "text.txt"          # File to read
 
 sentence_msg:
     .asciz "\nSentences: "
@@ -43,11 +43,11 @@ _start:
     li a7, 56                  # Syscall number for openat
     ecall
     bltz a0, exit_error        # Exit if open failed
-    mv t0, a0                  # Save file descriptor in t0
+    mv s1, a0                  # Save file descriptor in s1
 
 read_loop:
     # Read from file
-    mv a0, t0                  # File descriptor
+    mv a0, s1                  # File descriptor
     mv a1, s0                  # Buffer address
     li a2, 1024                # Buffer size
     li a7, 63                  # Syscall number for read
@@ -66,56 +66,170 @@ read_loop:
 
 
     ### Counting and saving ###
+    jal x1, add_letters_to_buffer   # Push to buffer latin letters
+    jal x1, count_letters
+
+        li a0, 1                   # Stdout file descriptor
+    mv a1, sp                  # Buffer address
+    li a2, 261                   # Len 
+    li a7, 64                  # Syscall number for write
+    ecall
 
     ## Cases ##
-    jal x1, count_cases     # get U/L case count, t2 = UpC, t3=LoC
+    # jal x1, count_cases     # get U/L case count, t2 = UpC, t3=LoC
     
-    mv a0, t3               # Use L case count as arg
-    jal x1, save_count      # Count L case count
+    # mv a0, t3               # Use L case count as arg
+    # jal x1, save_count      # Count L case count
     
-    mv a0, t2               # Use U case count as arg
-    jal x1, save_count      # Count U case count
+    # mv a0, t2               # Use U case count as arg
+    # jal x1, save_count      # Count U case count
     
-    ## Words ##
-    jal x1, count_words     # Get word count
+    # ## Words ##
+    # jal x1, count_words     # Get word count
     
-    mv a0, t2               # Use word count as arg
-    jal x1, save_count      # Save word count
+    # mv a0, t2               # Use word count as arg
+    # jal x1, save_count      # Save word count
 
-    ## Sentences ##
-    jal x1, count_sentences # get sentence count
+    # ## Sentences ##
+    # jal x1, count_sentences # get sentence count
     
-    mv a0, t2               # Use sentence count as arg
-    jal x1, save_count      # Save sentence count
+    # mv a0, t2               # Use sentence count as arg
+    # jal x1, save_count      # Save sentence count
 
 
-    ### Prints ###
+    # ### Prints ###
 
-    # Sentence
-    la a1, sentence_msg     # Sentence message address
-    li a2, 12               # Message length
-    jal x1, print_msg
-    jal x1, print_result
+    # # Sentence
+    # la a1, sentence_msg     # Sentence message address
+    # li a2, 12               # Message length
+    # jal x1, print_msg
+    # jal x1, print_result
     
-    # Word
-    la a1, word_msg         # Word message address
-    li a2, 8                # Message length
-    jal x1, print_msg 
-    jal x1, print_result
+    # # Word
+    # la a1, word_msg         # Word message address
+    # li a2, 8                # Message length
+    # jal x1, print_msg 
+    # jal x1, print_result
 
-    # Cases
-    la a1, ucase_msg        # Uppercase message address
-    li a2, 12               # Message length
-    jal x1, print_msg
-    jal x1, print_result
+    # # Cases
+    # la a1, ucase_msg        # Uppercase message address
+    # li a2, 12               # Message length
+    # jal x1, print_msg
+    # jal x1, print_result
     
-    la a1, lcase_msg        # Lowercase message address
-    li a2, 12               # Message length
-    jal x1, print_msg
-    jal x1, print_result
+    # la a1, lcase_msg        # Lowercase message address
+    # li a2, 12               # Message length
+    # jal x1, print_msg
+    # jal x1, print_result
 
 
     j close_file                # Continue reading
+
+count_letters:
+    # Count letters based on their case seperately
+    # By their index in buffer
+    # Every letter appears by 5 bytes 
+    # [Letter][:][0][0][0]
+    # 0-130 a-z , in 5 bytes, 0-a, 5-b, 10-c
+    # 130-260 A-Z
+    
+    mv t1, s0
+    mv t2, sp
+    
+    li a0, 5 # Space between letters
+    li a1, 2 # Space to count number
+    
+    beq zero, zero, loop_letters  # Go back to loop
+
+    add_upc_letter_count:
+        mul t0, t0, a0              # Get letter place in array 
+
+        add t2, sp, t0             # Get letter in place
+        add t2, t2, a1              # Get count number
+        lb t3, 0(t2)                # Load value
+
+        addi t3, t3, 1              # Increment letters count value
+        sb t3, 0(t2)                # Save it back
+
+        beq zero, zero, loop_letters  # Go back to loop
+    
+    # add_lc_letter_count:
+    #     addi t3, t3, 1              # LoC counter
+    
+    loop_letters:                   # Iterate letters
+        lb t4, 0(t1)                # Load letter
+        
+        beqz t4, return 
+
+        addi t1, t1, 1              # go to next letter
+        
+        addi t0, t4, -65              # subtract first Uppercase letter ascii code
+        blt t0, zero, loop_letters    # Is not a letter
+
+        beqz t0, add_upc_letter_count    # Check Upper case start
+        addi t5, zero, 25           # Upper case end
+        ble t0, t5, add_upc_letter_count # Is in boundary of upper case letters
+
+        # addi t0, t4, -97                # Lowercase
+        # blt t0, zero, loop_letters    # Is not a letter
+
+        # beqz t0, add_lc_letter_count    # Checker Lower case start
+        # addi t5, zero, 25           # Lower case end
+        # ble t0, t5, add_lc_letter_count # Is in boundary of lower case letters
+
+        bnez t4, loop_letters
+
+    return:
+        jalr x0, x1, 0
+
+
+    jalr x0, x1, 0 
+
+add_letters_to_buffer:
+    # Z-A(90-65), z-a(122-97), :(58), [SPACE](32)
+    li t1, 90                   # Start Z
+    li t2, 64                   # End   A - 1
+    li t3, 58                   # :
+
+    uppercase:
+        addi sp, sp, -1         # Save 3 bytes for storing counts
+        sb zero, 0(sp)
+        addi sp, sp, -1
+        sb zero, 0(sp)
+        addi sp, sp, -1
+        sb zero, 0(sp)
+        
+        addi sp, sp, -1
+        sb t3, 0(sp)            # Save : for display
+        addi sp, sp, -1
+        sb t1, 0(sp)            # Save letter
+
+        addi t1, t1, -1
+        bgt t1, t2, uppercase
+    
+    li t1, 122                  # Start z
+    li t2, 96                   # End   a - 1
+
+    lowercase:
+        addi sp, sp, -1         # Save 3 bytes for storing counts
+        sb zero, 0(sp)
+        addi sp, sp, -1
+        sb zero, 0(sp)
+        addi sp, sp, -1
+        sb zero, 0(sp)
+        
+        addi sp, sp, -1
+        sb t3, 0(sp)            # Save : for display
+
+        addi sp, sp, -1
+        sb t1, 0(sp)            # Save letter
+
+        addi t1, t1, -1
+        bgt t1, t2, lowercase
+
+
+    jalr x0, x1, 0
+
 
 print_msg: # print string before count
 
@@ -123,6 +237,7 @@ print_msg: # print string before count
     li a0, 1                   # Stdout file descriptor
     li a7, 64                  # Syscall number for write
     ecall
+
     jalr x0, x1, 0
 
 print_result:
@@ -211,8 +326,6 @@ count_cases:
     go_back:
         jalr x0, x1, 0
 
-    jalr x0, x1, 0
-
 count_words:
     addi t2, zero, 0 # Counter, starts from 1 to account for last sentence not having a space
     mv t1, s0
@@ -226,7 +339,7 @@ count_words:
 
         addi t1, t1, 1
 
-        addi t5, zero, 32 # Checker
+        addi t5, zero, 32 # Checker for [SPACE]
         beq t4, t5, add_word_count
 
         bnez t4, loop_words
@@ -262,7 +375,7 @@ count_sentences:
 
 close_file:
     # Close the file
-    mv a0, t0                  # File descriptor
+    mv a0, s1                  # File descriptor
     li a7, 57                  # Syscall number for close
     ecall
 
