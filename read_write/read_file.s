@@ -80,30 +80,26 @@ read_loop:
     mv t0, sp           # Get stack pointer
     li a1, 2            # Informs save_count that we're updating values
     li a2, 5            # Length for each letter [L][:][hundreds][tens][ones]
-    li t2, 100
+    li t2, 25
+    li s3, 0
 
     update_count_values:
-        addi t0, t0, 2 # Get count for letter
+        addi t0, t0, 2              # Get count for letter
         lb a0, 0(t0)
+
         jal x1, save_count
 
-        li a0, 1                   # Stdout file descriptor
-        mv a1, sp                  # Buffer address
-        li a7, 64                  # Syscall number for write
-        ecall
-
-        mv t1, a2
-
-        # Write to stdout
-        li a0, 1                   # Stdout file descriptor
-        la a1, newline             # Message address
-        li a2, 1                   # Message length
-        li a7, 64                  # Syscall number for write
-        ecall
-
-        mv a2, t1                   # Return length
-        addi a2, a2, 5              # Go to next letter
-        blt a2, t2, update_count_values
+        addi s3, s3, 1              # Keep track of letter count already converted
+        
+        blt s3, t2, update_count_values
+        
+    li a0, 1                   # Stdout file descriptor
+    mv a1, sp                  # Buffer address
+    li a2, 120
+    li a7, 64                  # Syscall number for write
+    ecall
+    # TO print result we need to define a2 to 5
+    # Iterate through letters in 5's
 
 
     ## Cases ##
