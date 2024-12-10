@@ -68,8 +68,9 @@ read_loop:
     ### Counting and saving ###
     jal x1, add_letters_to_buffer   # Push to buffer latin letters
     jal x1, count_letters
-
-        li a0, 1                   # Stdout file descriptor
+    # Save counts as ascii characters
+    
+    li a0, 1                   # Stdout file descriptor
     mv a1, sp                  # Buffer address
     li a2, 261                   # Len 
     li a7, 64                  # Syscall number for write
