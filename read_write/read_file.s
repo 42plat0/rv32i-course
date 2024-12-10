@@ -189,7 +189,6 @@ count_letters:
     beq zero, zero, loop_letters  # Go back to loop
 
     add_upc_letter_count:
-        addi t0, t0, 26             # Uppercase letters are above lower
         mul t0, t0, a0              # Get letter place in array 
 
         add t2, sp, t0              # Get letter in place
@@ -203,6 +202,7 @@ count_letters:
         beqz zero, loop_letters     # Go back to loop
     
     add_lc_letter_count:
+        addi t0, t0, 26             # Lowercase letters are above lower
         mul t0, t0, a0              # Get letter place in array 
 
         add t2, sp, t0              # Get letter in place
@@ -244,26 +244,7 @@ count_letters:
 
 add_letters_to_buffer:
     # Z-A(90-65), z-a(122-97), :(58), [SPACE](32)
-    li t1, 90                   # Start Z
-    li t2, 64                   # End   A - 1
     li t3, 58                   # :
-
-    uppercase:
-        addi sp, sp, -1         # Save 3 bytes for storing counts
-        sb zero, 0(sp)
-        addi sp, sp, -1
-        sb zero, 0(sp)
-        addi sp, sp, -1
-        sb zero, 0(sp)
-        
-        addi sp, sp, -1
-        sb t3, 0(sp)            # Save : for display
-        addi sp, sp, -1
-        sb t1, 0(sp)            # Save letter
-
-        addi t1, t1, -1
-        bgt t1, t2, uppercase
-    
     li t1, 122                  # Start z
     li t2, 96                   # End   a - 1
 
@@ -283,6 +264,26 @@ add_letters_to_buffer:
 
         addi t1, t1, -1
         bgt t1, t2, lowercase
+
+    li t1, 90                   # Start Z
+    li t2, 64                   # End   A - 1
+    
+    uppercase:
+        addi sp, sp, -1         # Save 3 bytes for storing counts
+        sb zero, 0(sp)
+        addi sp, sp, -1
+        sb zero, 0(sp)
+        addi sp, sp, -1
+        sb zero, 0(sp)
+        
+        addi sp, sp, -1
+        sb t3, 0(sp)            # Save : for display
+        addi sp, sp, -1
+        sb t1, 0(sp)            # Save letter
+
+        addi t1, t1, -1
+        bgt t1, t2, uppercase
+    
 
 
     jalr x0, x1, 0
