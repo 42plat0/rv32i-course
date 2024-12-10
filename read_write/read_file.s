@@ -65,16 +65,46 @@ read_loop:
     bltz a0, write_error       # Exit if write failed
 
 
+    # Write to stdout
+    li a0, 1                   # Stdout file descriptor
+    la a1, newline             # Message address
+    li a2, 1                   # Message length
+    li a7, 64                  # Syscall number for write
+    ecall
+
     ### Counting and saving ###
     jal x1, add_letters_to_buffer   # Push to buffer latin letters
     jal x1, count_letters
-    # Save counts as ascii characters
     
-    li a0, 1                   # Stdout file descriptor
-    mv a1, sp                  # Buffer address
-    li a2, 261                   # Len 
-    li a7, 64                  # Syscall number for write
-    ecall
+    # Save counts as ascii characters
+    mv t0, sp           # Get stack pointer
+    li a1, 2            # Informs save_count that we're updating values
+    li a2, 5            # Length for each letter [L][:][hundreds][tens][ones]
+    li t2, 100
+
+    update_count_values:
+        addi t0, t0, 2 # Get count for letter
+        lb a0, 0(t0)
+        jal x1, save_count
+
+        li a0, 1                   # Stdout file descriptor
+        mv a1, sp                  # Buffer address
+        li a7, 64                  # Syscall number for write
+        ecall
+
+        mv t1, a2
+
+        # Write to stdout
+        li a0, 1                   # Stdout file descriptor
+        la a1, newline             # Message address
+        li a2, 1                   # Message length
+        li a7, 64                  # Syscall number for write
+        ecall
+
+        mv a2, t1                   # Return length
+        addi a2, a2, 5              # Go to next letter
+        blt a2, t2, update_count_values
+
 
     ## Cases ##
     # jal x1, count_cases     # get U/L case count, t2 = UpC, t3=LoC
@@ -152,7 +182,7 @@ count_letters:
         addi t3, t3, 1              # Increment letters count value
         sb t3, 0(t2)                # Save it back
 
-        beq zero, zero, loop_letters  # Go back to loop
+        beqz zero, loop_letters  # Go back to loop
     
     # add_lc_letter_count:
     #     addi t3, t3, 1              # LoC counter
@@ -208,25 +238,25 @@ add_letters_to_buffer:
         addi t1, t1, -1
         bgt t1, t2, uppercase
     
-    li t1, 122                  # Start z
-    li t2, 96                   # End   a - 1
+    # li t1, 122                  # Start z
+    # li t2, 96                   # End   a - 1
 
-    lowercase:
-        addi sp, sp, -1         # Save 3 bytes for storing counts
-        sb zero, 0(sp)
-        addi sp, sp, -1
-        sb zero, 0(sp)
-        addi sp, sp, -1
-        sb zero, 0(sp)
+    # lowercase:
+    #     addi sp, sp, -1         # Save 3 bytes for storing counts
+    #     sb zero, 0(sp)
+    #     addi sp, sp, -1
+    #     sb zero, 0(sp)
+    #     addi sp, sp, -1
+    #     sb zero, 0(sp)
         
-        addi sp, sp, -1
-        sb t3, 0(sp)            # Save : for display
+    #     addi sp, sp, -1
+    #     sb t3, 0(sp)            # Save : for display
 
-        addi sp, sp, -1
-        sb t1, 0(sp)            # Save letter
+    #     addi sp, sp, -1
+    #     sb t1, 0(sp)            # Save letter
 
-        addi t1, t1, -1
-        bgt t1, t2, lowercase
+    #     addi t1, t1, -1
+    #     bgt t1, t2, lowercase
 
 
     jalr x0, x1, 0
@@ -260,36 +290,57 @@ print_result:
     jalr x0, x1, 0
 
 save_count:
-    # a0 = count, t6 = divisor, t3 = hundreds, t1 = tens, t5 = ones
+    # a0 = count, t6 = divisor/validator, t3 = hundreds, t1 = tens, t5 = ones
+    # a1 = validator, 1 if adding, 2 if updating
+    # t0 = stack pointer when updating count values
+    
     # Get 100s 10ths and 1s
     li t6, 100
     div t3, a0, t6 # Hundreds count
     rem t4, a0, t6 # 10's
 
     li t6, 10
-    div t1, t4, t6 # 10's count
     rem t5, t4, t6 # 1's count
+    div t1, t4, t6 # 10's count
     
     # Get num ascii code
     addi t3, t3, 48 # Hundreds
     addi t1, t1, 48 # Tens
     addi t5, t5, 48 # Ones
 
-    # Add numbers to stack
+    li t6, 1        # validator
 
-    # Ones
-    addi sp, sp, -1 
-    sb t5, 0(sp)
-    
-    # Tens
-    addi sp, sp, -1
-    sb t1, 0(sp)
+    beq t6, a1, adding
 
-    # Hundreds
-    addi sp, sp, -1
-    sb t3, 0(sp)
+    updating:
+        sb t3, 0(t0)    # Hundreds
+        addi t0, t0, 1
 
-    jalr x0, x1, 0
+        sb t1, 0(t0)    # Tens
+        addi t0, t0, 1
+
+        sb t5, 0(t0)    # Ones
+        addi t0, t0, 1
+
+        beqz zero, back_main
+
+    # Add numbers to stack if they do not exist
+
+    adding:
+        # Ones
+        addi sp, sp, -1 
+        sb t5, 0(sp)
+        
+        # Tens
+        addi sp, sp, -1
+        sb t1, 0(sp)
+
+        # Hundreds
+        addi sp, sp, -1
+        sb t3, 0(sp)
+
+    back_main:
+        jalr x0, x1, 0
 
 count_cases:
     mv t1, s0                       # Buffer
