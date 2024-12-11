@@ -208,26 +208,27 @@ count_letters:
         addi t3, t3, 1              # Increment letters count value
         sb t3, 0(t2)                # Save it back
     
-    loop_letters:                   # Iterate letters
-        lb t4, 0(t1)                # Load letter
+    # Iterate letters
+    loop_letters:                   
+        lb t4, 0(t1)                     # Load letter
         
-        beqz t4, return 
+        beqz t4, return                  # No char left
 
-        addi t1, t1, 1              # go to next letter
+        addi t1, t1, 1                   # go to next letter
         
-        addi t0, t4, -65              # subtract first Uppercase letter ascii code
-        blt t0, zero, loop_letters    # Is not a letter
+        addi t0, t4, -65                 # subtract first Uppercase letter ascii code
+        blt t0, zero, loop_letters       # Is not a letter
 
         beqz t0, add_upc_letter_count    # Check Upper case start
-        addi t5, zero, 25           # Upper case end
+        addi t5, zero, 25                # Upper case end
         ble t0, t5, add_upc_letter_count # Is in boundary of upper case letters
 
-        addi t0, t4, -97                # Lowercase
-        blt t0, zero, loop_letters    # Is not a letter
+        addi t0, t4, -97                 # Lowercase
+        blt t0, zero, loop_letters       # Is not a letter
 
-        beqz t0, add_lc_letter_count    # Checker Lower case start
-        addi t5, zero, 25           # Lower case end
-        ble t0, t5, add_lc_letter_count # Is in boundary of lower case letters
+        beqz t0, add_lc_letter_count     # Checker Lower case start
+        addi t5, zero, 25                # Lower case end
+        ble t0, t5, add_lc_letter_count  # Is in boundary of lower case letters
 
         bnez t4, loop_letters
 
@@ -238,48 +239,49 @@ count_letters:
     jalr x0, x1, 0 
 
 add_letters_to_buffer:
-    # Z-A(90-65), z-a(122-97), :(58), [SPACE](32)
-    li t3, 58                   # :
-    li t1, 122                  # Start z
-    li t2, 96                   # End   a - 1
+    # Z-A(90-65), z-a(122-97), :(58)
+    li t3, 58                           # :
+    li t1, 122                          # Start z
+    li t2, 96                           # End   a - 1
 
     lowercase:
-        addi sp, sp, -1         # Save 3 bytes for storing counts
-        sb zero, 0(sp)
-        addi sp, sp, -1
-        sb zero, 0(sp)
-        addi sp, sp, -1
-        sb zero, 0(sp)
+        # Save 3 bytes for storing numbers
+        addi sp, sp, -1                 # Increment stack pointer    
+        sb zero, 0(sp)                  # Ones  
+        addi sp, sp, -1                 # Increment stack pointer
+        sb zero, 0(sp)                  # Tens
+        addi sp, sp, -1                 # Increment stack pointer
+        sb zero, 0(sp)                  # Hundreds 
         
-        addi sp, sp, -1
-        sb t3, 0(sp)            # Save : for display
-
-        addi sp, sp, -1
-        sb t1, 0(sp)            # Save letter
+        # Save starting to characters - letter and :
+        addi sp, sp, -1                 # Increment stack pointer
+        sb t3, 0(sp)                    # Save : for display
+        addi sp, sp, -1                 # Increment stack pointer
+        sb t1, 0(sp)                    # Save letter
 
         addi t1, t1, -1
         bgt t1, t2, lowercase
 
-    li t1, 90                   # Start Z
-    li t2, 64                   # End   A - 1
+    li t1, 90                           # Start Z
+    li t2, 64                           # End   A - 1
     
     uppercase:
-        addi sp, sp, -1         # Save 3 bytes for storing counts
-        sb zero, 0(sp)
-        addi sp, sp, -1
-        sb zero, 0(sp)
-        addi sp, sp, -1
-        sb zero, 0(sp)
+        # Save 3 bytes for storing numbers
+        addi sp, sp, -1                 # Increment stack pointer    
+        sb zero, 0(sp)                  # Ones  
+        addi sp, sp, -1                 # Increment stack pointer
+        sb zero, 0(sp)                  # Tens
+        addi sp, sp, -1                 # Increment stack pointer
+        sb zero, 0(sp)                  # Hundreds 
         
-        addi sp, sp, -1
-        sb t3, 0(sp)            # Save : for display
-        addi sp, sp, -1
-        sb t1, 0(sp)            # Save letter
+        # Save starting to characters - letter and :
+        addi sp, sp, -1                 # Increment stack pointer
+        sb t3, 0(sp)                    # Save : for display
+        addi sp, sp, -1                 # Increment stack pointer
+        sb t1, 0(sp)                    # Save letter
 
-        addi t1, t1, -1
+        addi t1, t1, -1                 # Go backwards from Z to A
         bgt t1, t2, uppercase
-    
-
 
     jalr x0, x1, 0
 
@@ -287,25 +289,25 @@ add_letters_to_buffer:
 print_msg: # print string before count
 
     # Write to stdout
-    li a0, 1                   # Stdout file descriptor
-    li a7, 64                  # Syscall number for write
+    li a0, 1                            # Stdout file descriptor
+    li a7, 64                           # Syscall number for write
     ecall
 
     jalr x0, x1, 0
 
 print_result:
-    li a0, 1                   # Stdout file descriptor
-    mv a1, sp                  # Buffer address
-    li a7, 64                  # Syscall number for write
+    li a0, 1                            # Stdout file descriptor
+    mv a1, sp                           # Buffer address
+    li a7, 64                           # Syscall number for write
     ecall
     
-    add sp, sp, a2 # Increment sp to print next number 
+    add sp, sp, a2                      # Increment sp to print next number 
 
     # Write to stdout
-    li a0, 1                   # Stdout file descriptor
-    la a1, newline             # Message address
-    li a2, 1                   # Message length
-    li a7, 64                  # Syscall number for write
+    li a0, 1                            # Stdout file descriptor
+    la a1, newline                      # Message address
+    li a2, 1                            # Message length
+    li a7, 64                           # Syscall number for write
     ecall
 
 
@@ -318,82 +320,79 @@ save_count:
     
     # Get 100s 10ths and 1s
     li t6, 100
-    div t3, a0, t6 # Hundreds count
-    rem t4, a0, t6 # 10's
+    div t3, a0, t6                      # Hundreds count
+    rem t4, a0, t6                      # 10's
 
     li t6, 10
-    rem t5, t4, t6 # 1's count
-    div t1, t4, t6 # 10's count
+    rem t5, t4, t6                      # 1's count
+    div t1, t4, t6                      # 10's count
     
     # Get num ascii code
-    addi t3, t3, 48 # Hundreds
-    addi t1, t1, 48 # Tens
-    addi t5, t5, 48 # Ones
+    addi t3, t3, 48                     # Hundreds
+    addi t1, t1, 48                     # Tens
+    addi t5, t5, 48                     # Ones
 
-    li t6, 1        # validator
+    li t6, 1                            # Validator
 
     beq t6, a1, adding
 
+    # Change values in the stack if they do exist 
     updating:
-        sb t3, 0(t0)    # Hundreds
-        addi t0, t0, 1
+        sb t3, 0(t0)                    # Hundreds
+        addi t0, t0, 1                  # Update stack pointer
 
-        sb t1, 0(t0)    # Tens
-        addi t0, t0, 1
+        sb t1, 0(t0)                    # Tens
+        addi t0, t0, 1                  # Update stack pointer
 
-        sb t5, 0(t0)    # Ones
-        addi t0, t0, 1
+        sb t5, 0(t0)                    # Ones
+        addi t0, t0, 1                  # Update stack pointer
 
         beqz zero, back_main
 
     # Add numbers to stack if they do not exist
-
     adding:
-        # Ones
-        addi sp, sp, -1 
-        sb t5, 0(sp)
+        addi sp, sp, -1                  # Update stack pointer
+        sb t5, 0(sp)                     # Ones
         
-        # Tens
-        addi sp, sp, -1
-        sb t1, 0(sp)
+        addi sp, sp, -1                  # Update stack pointer
+        sb t1, 0(sp)                     # Tens
 
-        # Hundreds
-        addi sp, sp, -1
-        sb t3, 0(sp)
+        addi sp, sp, -1                  # Update stack pointer
+        sb t3, 0(sp)                     # Hundreds
 
     back_main:
         jalr x0, x1, 0
 
 count_cases:
-    mv t1, s0                       # Buffer
-    addi t2, zero, -1               # Uppercase ctr
-    add t3, zero, zero              # Lowercase ctr
+    mv t1, s0                           # Buffer
+    addi t2, zero, -1                   # Uppercase ctr
+    add t3, zero, zero                  # Lowercase ctr
 
     add_ucase_count:
-        addi t2, t2, 1              # UpC counter
-        beq zero, zero, loop_cases  # Go back to loop
+        addi t2, t2, 1                  # UpC counter
+        beq zero, zero, loop_cases      # Go back to loop
     
     add_lcase_count:
-        addi t3, t3, 1              # LoC counter
+        addi t3, t3, 1                  # LoC counter
 
     loop_cases: # check for cases
-        lb t4, 0(t1)                # Load letter
+        lb t4, 0(t1)                    # Load letter
         
         beqz t4, go_back 
 
-        addi t1, t1, 1              # go to next letter
+        addi t1, t1, 1                  # Go to next letter
         
-        addi t0, t4, -65            # subtract first Uppercase letter ascii code
-        blt t0, zero, loop_cases    # Is not a letter
-        beqz t0, add_ucase_count    # Check Upper case start
-        addi t5, zero, 25           # Upper case end
-        ble t0, t5, add_ucase_count # Is in boundary of upper case letters
+        addi t0, t4, -65                # subtract first Uppercase letter ascii code
+        blt t0, zero, loop_cases        # Is not a letter
+        beqz t0, add_ucase_count        # Check Upper case start
+        addi t5, zero, 25               # Upper case end
+        ble t0, t5, add_ucase_count     # Is in boundary of upper case letters
 
-        addi t0, t4, -97
-        blt t0, zero, loop_cases    # Is not a letter
-        beqz t0, add_lcase_count    # Checker Lower case start
-        addi t5, zero, 25           # Lower case end
-        ble t0, t5, add_lcase_count # Is in boundary of lower case letters
+        addi t0, t4, -97                # Check for lowercase
+        blt t0, zero, loop_cases        # Is not a letter
+        beqz t0, add_lcase_count        # Checker Lower case start
+        addi t5, zero, 25               # Lower case end
+        ble t0, t5, add_lcase_count     # Is in boundary of lower case letters
 
         bnez t4, loop_cases
 
@@ -401,49 +400,52 @@ count_cases:
         jalr x0, x1, 0
 
 count_words:
-    addi t2, zero, 0 # Counter, starts from 1 to account for last sentence not having a space
+    addi t2, zero, 1                    # Counter, starts from 1 to account for last sentence not having a space
     mv t1, s0
+    li t5, 32                           # Checker for [SPACE]
+
+    beqz zero, loop_words
 
     add_word_count:
+        lb t3, -2(t1)                   # Load value before space
+
+        beq t3, t4, loop_words          # Do not increment counter if value before is [SPACE]
         addi t2, t2, 1
 
-    loop_words:
-        # check for spaces, need to include also last 
-        lb t4, 0(t1)
-
-        addi t1, t1, 1
-
-        addi t5, zero, 32 # Checker for [SPACE]
-        beq t4, t5, add_word_count
-
-        bnez t4, loop_words
+    loop_words:                         # Check for spaces
+        lb t4, 0(t1)                    # Load letter
+        addi t1, t1, 1                  # Increment buffer pointer
+        beq t4, t5, add_word_count      # Increment word count if space appears
+        bnez t4, loop_words             # While there is a letter
         
     jalr x0, x1, 0
 
 
 count_sentences:
+    addi t2, zero, 0                    # Sentence counter initialization
+    mv t1, s0                           # Buffer address
 
-    addi t2, zero, -1 # Counter
-    mv t1, s0 # Buffer address
+    beqz zero, loop_sentence
 
     add_sentence:
-        addi t2, t2, 1 # Counter
+        lb t3, -2(t1)                   # Load char before current char
 
-    loop_sentence:
-        # check for end of sentence (33, 46, 63)
+        beq t3, t4, loop_sentence       # Do not increment counter if value before is the same
+        addi t2, t2, 1                  # Sentence counter
+
+    loop_sentence:                      # Check for end of sentence - !(33), .(46), ?(63)
         lb t4, 0(t1)
 
-        addi t1, t1, 1
-        addi t5, zero, 33 # Checker
+        addi t1, t1, 1                  # Load char
+
+        li t5, 33                       # ! character
+        beq t4, t5, add_sentence  
+        li t5, 46                       # . character
         beq t4, t5, add_sentence
-        addi t5, zero, 46 
-        beq t4, t5, add_sentence
-        addi t5, zero, 63
+        li t5, 63                       # ? character
         beq t4, t5, add_sentence
 
-        bnez t4, loop_sentence
-
-
+        bnez t4, loop_sentence          # While there is a char
 
     jalr x0, x1, 0
 
@@ -461,6 +463,8 @@ close_file:
 read_error:
 write_error:
 exit_error:
+
+    jal x1, print_msg
 
     li a0, 1
     li a7, 93
