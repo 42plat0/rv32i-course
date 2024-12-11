@@ -3,6 +3,9 @@
 filename:
     .asciz "text.txt"          # File to read
 
+new_filename:
+    .asciz "c_text.txt"
+
 sentence_msg:
     .asciz "\nSentences: "
 
@@ -26,15 +29,13 @@ error_msg:
 bufferstr: 
     .space 2048
 
-    
 .text
 .globl _start
 
 _start:
-    # addi sp, sp, -1024 # Create stack for results
-
+    # Set buffer address
     lui s0, %hi(bufferstr)
-    addi s0, s0,%lo(bufferstr) # Set buffer address
+    addi s0, s0,%lo(bufferstr) 
 
     # Open file
     li a0, -100                # AT_FDCWD
@@ -55,16 +56,16 @@ read_loop:
     ecall
     bltz a0, read_error        # Exit if read failed
     beqz a0, close_file        # End of file (read 0 bytes)
-    mv a2,a0                   # Bytes to print
-
     
+    mv s2, a0                   # Save byte count for overwriting
+
     # Write to stdout
     li a0, 1                   # Stdout file descriptor
     mv a1, s0                  # Buffer address
+    mv a2, s2                   # Bytes to print
     li a7, 64                  # Syscall number for write
     ecall
     bltz a0, write_error       # Exit if write failed
-
 
     # Write to stdout
     li a0, 1                   # Stdout file descriptor
@@ -74,18 +75,19 @@ read_loop:
     ecall
 
     ### Counting and saving ###
-    jal x1, add_letters_to_buffer   # Push to buffer latin letters
-    jal x1, count_letters
-    
-    # Save counts as ascii characters
-    mv t0, sp           # Get stack pointer
-    li a1, 2            # Informs save_count that we're updating values
 
+    ## Letters ##
+    jal x1, add_letters_to_buffer       # Push to buffer latin letters
+    jal x1, count_letters           
+    
+    # Save counts as ascii characters for each letter
+    mv t0, sp                           # Get stack pointer
+    li a1, 2                            # Informs save_count that we're updating values
     li t2, 52                           # Letter count - 2 (less than)
 
     update_count_values:
-        addi t0, t0, 2                  # Get count for letter
-        lb a0, 0(t0)
+        addi t0, t0, 2                  # Get count for letter saved in third byte
+        lb a0, 0(t0)                    
 
         jal x1, save_count
 
@@ -94,17 +96,17 @@ read_loop:
         bgt t2, zero, update_count_values
     
 
-    # Cases ##
+    ## Cases ##
     jal x1, count_cases     # get U/L case count, t2 = UpC, t3=LoC
     
+    # Lowercase
     mv a0, t3               # Use L case count as arg
     li a1, 1                # Informs save_count that we're saving values
-
     jal x1, save_count      # Count L case count
     
+    # Uppercase
     mv a0, t2               # Use U case count as arg
     li a1, 1                # Informs save_count that we're saving values
-
     jal x1, save_count      # Count U case count
     
     ## Words ##
@@ -112,7 +114,6 @@ read_loop:
     
     mv a0, t2               # Use word count as arg
     li a1, 1                # Informs save_count that we're saving values
-
     jal x1, save_count      # Save word count
 
     ## Sentences ##
@@ -120,11 +121,10 @@ read_loop:
     
     mv a0, t2               # Use sentence count as arg
     li a1, 1                # Informs save_count that we're saving values
-
     jal x1, save_count      # Save sentence count
 
 
-    # ### Prints ###
+    ### Prints ###
 
     # Sentence
     la a1, sentence_msg     # Sentence message address
@@ -157,15 +157,79 @@ read_loop:
     li a2, 3                # Load length of result
     jal x1, print_result
 
+    # Letter counts
     print:        
         li a2, 5                        # Set string length 
         jal x1, print_result            # Print out letter and its count
         
-        lb t1, 0(sp)                    # Check if letter exists
-
+        # Check if next letter exists
+        lb t1, 0(sp)                    
         bgt t1, zero, print
 
-    j close_file                # Continue reading
+    jal x1, open_new
+    jal x1, change_letters
+    jal x1, write_new
+
+    # TODO 
+        # Update stack pointer to 0 after reading
+    j close_file                        # Continue reading
+
+write_new:
+    
+    # Write to file
+    # mv a0, t2                     # File descriptor
+    mv a1, s0                       # Buffer address
+    mv a2, s2                       # Bytes to print
+    li a7, 64                       # Syscall number for write
+    ecall
+
+    bltz a0, write_error       # Exit if write failed
+
+    jalr x0, x1, 0
+
+change_letters:
+    mv t1, s0
+        
+    beq zero, zero, check_letters
+
+    g_upp_case:
+        li t3, 80           # P
+        sb t3, 0(t1)
+
+        beqz zero, check_letters
+
+    g_lo_case:
+        li t3, 112          # p
+        sb t3, 0(t1)
+        
+    check_letters:
+        lb t4, 0(t1)            # Load current char
+        
+        # G  checker
+        li t3, 71               
+        beq t4, t3, g_upp_case
+
+        # g  checker
+        li t3, 103              
+        beq t4, t3, g_lo_case
+        
+        addi t1, t1, 1          # Advance pointer
+        
+        bnez t4, check_letters
+
+    jalr x0, x1, 0
+
+open_new:
+    # Create new file
+    li a0, -100                # AT_FDCWD
+    la a1, new_filename        # File name
+    li a2, 2                   # O_WRONLY
+    li a7, 56                  # Syscall number for openat
+    ecall
+
+    bltz a0, exit_error        # Exit if open failed
+
+    jalr x0, x1, 0
 
 count_letters:
     # Count letters based on their case seperately
@@ -178,10 +242,10 @@ count_letters:
     mv t1, s0
     mv t2, sp
     
-    li a0, 5 # Space between letters
-    li a1, 2 # Space to count number
+    li a0, 5                        # Space between letters
+    li a1, 2                        # Space to count number
     
-    beq zero, zero, loop_letters  # Go back to loop
+    beq zero, zero, loop_letters    # Go back to loop
 
     add_upc_letter_count:
         mul t0, t0, a0              # Get letter place in array 
@@ -463,7 +527,8 @@ close_file:
 read_error:
 write_error:
 exit_error:
-
+    la a1, error_msg         # Word message address
+    li a2, 20                # Message length
     jal x1, print_msg
 
     li a0, 1
