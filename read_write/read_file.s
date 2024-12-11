@@ -1,7 +1,7 @@
 .section .rodata
 .align 4
 filename:
-    .asciz "text_eng.txt"          # File to read
+    .asciz "text.txt"          # File to read
 
 sentence_msg:
     .asciz "\nSentences: "
@@ -18,13 +18,14 @@ ucase_msg:
 lcase_msg:
     .asciz "Lowercase: " 
 
+error_msg:
+    .asciz "Error: Read failed.\n"
+
 .section .data
 .align 4
 bufferstr: 
     .space 2048
 
-error_msg:
-    .asciz "Error: Read failed.\n"
     
 .text
 .globl _start
@@ -83,92 +84,86 @@ read_loop:
     li t2, 52                           # Letter count - 2 (less than)
 
     update_count_values:
-        addi t0, t0, 2              # Get count for letter
+        addi t0, t0, 2                  # Get count for letter
         lb a0, 0(t0)
 
         jal x1, save_count
 
-        addi t2, t2, -1              # Keep track of letter count already converted
+        addi t2, t2, -1                 # Keep track of letter count already converted
         
         bgt t2, zero, update_count_values
     
-    li t2, 27
-    li s3, 0
 
-    print:        
-        # Write to stdout
-        li a0, 1                   # Stdout file descriptor
-        la a1, newline             # Message address
-        li a2, 1                   # Message length
-        li a7, 64                  # Syscall number for write
-        ecall
-        
-        li a0, 1                   # Stdout file descriptor
-        mv a1, sp                  # Buffer address
-        li a2, 5
-        li a7, 64                  # Syscall number for write
-        ecall
-
-
-        addi sp, sp, 5
-        
-        lb t1, 0(sp)
-
-        addi s3, s3, 1
-
-        bgt t1, zero, print
-
-    # TO print result we need to define a2 to 5
-    # Iterate through letters in 5's
-
-
-    ## Cases ##
-    # jal x1, count_cases     # get U/L case count, t2 = UpC, t3=LoC
+    # Cases ##
+    jal x1, count_cases     # get U/L case count, t2 = UpC, t3=LoC
     
-    # mv a0, t3               # Use L case count as arg
-    # jal x1, save_count      # Count L case count
-    
-    # mv a0, t2               # Use U case count as arg
-    # jal x1, save_count      # Count U case count
-    
-    # ## Words ##
-    # jal x1, count_words     # Get word count
-    
-    # mv a0, t2               # Use word count as arg
-    # jal x1, save_count      # Save word count
+    mv a0, t3               # Use L case count as arg
+    li a1, 1                # Informs save_count that we're saving values
 
-    # ## Sentences ##
-    # jal x1, count_sentences # get sentence count
+    jal x1, save_count      # Count L case count
     
-    # mv a0, t2               # Use sentence count as arg
-    # jal x1, save_count      # Save sentence count
+    mv a0, t2               # Use U case count as arg
+    li a1, 1                # Informs save_count that we're saving values
+
+    jal x1, save_count      # Count U case count
+    
+    ## Words ##
+    jal x1, count_words     # Get word count
+    
+    mv a0, t2               # Use word count as arg
+    li a1, 1                # Informs save_count that we're saving values
+
+    jal x1, save_count      # Save word count
+
+    ## Sentences ##
+    jal x1, count_sentences # get sentence count
+    
+    mv a0, t2               # Use sentence count as arg
+    li a1, 1                # Informs save_count that we're saving values
+
+    jal x1, save_count      # Save sentence count
 
 
     # ### Prints ###
 
-    # # Sentence
-    # la a1, sentence_msg     # Sentence message address
-    # li a2, 12               # Message length
-    # jal x1, print_msg
-    # jal x1, print_result
+    # Sentence
+    la a1, sentence_msg     # Sentence message address
+    li a2, 12               # Message length
+    jal x1, print_msg
     
-    # # Word
-    # la a1, word_msg         # Word message address
-    # li a2, 8                # Message length
-    # jal x1, print_msg 
-    # jal x1, print_result
-
-    # # Cases
-    # la a1, ucase_msg        # Uppercase message address
-    # li a2, 12               # Message length
-    # jal x1, print_msg
-    # jal x1, print_result
+    li a2, 3                # Load length of result
+    jal x1, print_result
     
-    # la a1, lcase_msg        # Lowercase message address
-    # li a2, 12               # Message length
-    # jal x1, print_msg
-    # jal x1, print_result
+    # Word
+    la a1, word_msg         # Word message address
+    li a2, 8                # Message length
+    jal x1, print_msg 
+    
+    li a2, 3                # Load length of result
+    jal x1, print_result
 
+    # Cases
+    la a1, ucase_msg        # Uppercase message address
+    li a2, 12               # Message length
+    jal x1, print_msg
+    
+    li a2, 3                # Load length of result
+    jal x1, print_result
+    
+    la a1, lcase_msg        # Lowercase message address
+    li a2, 12               # Message length
+    jal x1, print_msg
+    
+    li a2, 3                # Load length of result
+    jal x1, print_result
+
+    print:        
+        li a2, 5                        # Set string length 
+        jal x1, print_result            # Print out letter and its count
+        
+        lb t1, 0(sp)                    # Check if letter exists
+
+        bgt t1, zero, print
 
     j close_file                # Continue reading
 
@@ -177,8 +172,8 @@ count_letters:
     # By their index in buffer
     # Every letter appears by 5 bytes 
     # [Letter][:][0][0][0]
-    # 0-130 a-z , in 5 bytes, 0-a, 5-b, 10-c
-    # 130-260 A-Z
+    # 0-130 A-Z , in 5 bytes, 0-a, 5-b, 10-c
+    # 130-260 a-z
     
     mv t1, s0
     mv t2, sp
@@ -301,9 +296,10 @@ print_msg: # print string before count
 print_result:
     li a0, 1                   # Stdout file descriptor
     mv a1, sp                  # Buffer address
-    li a2, 3                   # Len 
     li a7, 64                  # Syscall number for write
     ecall
+    
+    add sp, sp, a2 # Increment sp to print next number 
 
     # Write to stdout
     li a0, 1                   # Stdout file descriptor
@@ -312,7 +308,6 @@ print_result:
     li a7, 64                  # Syscall number for write
     ecall
 
-    addi sp, sp, 3 # Increment sp to print next number 
 
     jalr x0, x1, 0
 
