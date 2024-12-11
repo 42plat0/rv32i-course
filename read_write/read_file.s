@@ -125,9 +125,12 @@ print:
     la a1, sentence_msg     # Sentence message address
     li a2, 12               # Message length
     jal x1, print_msg
-    
+
     li a2, 3                # Load length of result
     jal x1, print_result
+    add sp, sp, a2                      # Increment sp to print next number 
+
+    jal x1, print_newline
     
     # Word
     la a1, word_msg         # Word message address
@@ -136,6 +139,9 @@ print:
     
     li a2, 3                # Load length of result
     jal x1, print_result
+    add sp, sp, a2                      # Increment sp to print next number 
+
+    jal x1, print_newline
 
     # Cases
     la a1, ucase_msg        # Uppercase message address
@@ -144,6 +150,8 @@ print:
     
     li a2, 3                # Load length of result
     jal x1, print_result
+    add sp, sp, a2                      # Increment sp to print next number 
+    jal x1, print_newline
     
     la a1, lcase_msg        # Lowercase message address
     li a2, 12               # Message length
@@ -151,14 +159,18 @@ print:
     
     li a2, 3                # Load length of result
     jal x1, print_result
+    add sp, sp, a2                      # Increment sp to print next number
+    jal x1, print_newline
 
     # Letter counts
     letter_print_loop:        
         li a2, 5                        # Set string length 
         jal x1, print_result            # Print out letter and its count
-        
+        add sp, sp, a2                      # Increment sp to print next number
+        jal x1, print_newline
+
         # Check if next letter exists
-        lb t1, 0(sp)                    
+        lb t1, 5(sp)                    
         bgt t1, zero, letter_print_loop
 
     jal x1, open_new            # Open new file
@@ -372,14 +384,7 @@ print_msg: # print string before count
 
     jalr x0, x1, 0
 
-print_result:
-    li a0, 1                            # Stdout file descriptor
-    mv a1, sp                           # Buffer address
-    li a7, 64                           # Syscall number for write
-    ecall
-    
-    add sp, sp, a2                      # Increment sp to print next number 
-
+print_newline:
     # Write to stdout
     li a0, 1                            # Stdout file descriptor
     la a1, newline                      # Message address
@@ -387,6 +392,14 @@ print_result:
     li a7, 64                           # Syscall number for write
     ecall
 
+    jalr x0, x1, 0
+
+print_result:
+    li a0, 1                            # Stdout file descriptor
+    mv a1, sp                           # Buffer address
+    li a7, 64                           # Syscall number for write
+    ecall
+    
     jalr x0, x1, 0
 
 save_count:
