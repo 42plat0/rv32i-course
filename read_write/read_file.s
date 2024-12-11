@@ -175,12 +175,10 @@ print:
 
     jal x1, open_new            # Open new file
     mv t2, a0                   # Save file descriptor for new file to close it latter after writing
-    jal x1, change_letters
-    jal x1, write_new
+    jal x1, change_letters      # Change letters in original buffer
+    jal x1, write_new           # Write and close new file with changed buffer
 
-    # TODO 
-        # Update stack pointer to 0 after reading
-    j close_file                        # Continue reading
+    j close_file                        # Close file
 
 write_new:
     # Write to file
@@ -233,7 +231,8 @@ open_new:
     # Create new file
     li a0, -100                # AT_FDCWD
     la a1, new_filename        # File name
-    li a2, 2                   # O_WRONLY
+    li a2, 64|1                # O_CREAT | O_WRONLY
+    li a3, 0644
     li a7, 56                  # Syscall number for openat
     ecall
 
