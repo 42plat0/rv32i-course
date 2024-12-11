@@ -167,6 +167,7 @@ read_loop:
         bgt t1, zero, print
 
     jal x1, open_new
+    mv t2, a0               # Save file descriptor for new file to close it latter after writing
     jal x1, change_letters
     jal x1, write_new
 
@@ -177,13 +178,16 @@ read_loop:
 write_new:
     
     # Write to file
-    # mv a0, t2                     # File descriptor
     mv a1, s0                       # Buffer address
     mv a2, s2                       # Bytes to print
     li a7, 64                       # Syscall number for write
     ecall
-
     bltz a0, write_error       # Exit if write failed
+    
+    # Close the file
+    mv a0, t2                     # File descriptor
+    li a7, 57                  # Syscall number for close
+    ecall
 
     jalr x0, x1, 0
 
