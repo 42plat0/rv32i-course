@@ -29,3 +29,4 @@ read
 	
 qemu -strace [filename] - ismeta dumpa su sys call rezultatais
 -strace -d in_asm, cpu [filename]
+START: 46912504507856

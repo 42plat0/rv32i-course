@@ -67,13 +67,7 @@ read_loop:
     ecall
     bltz a0, write_error       # Exit if write failed
 
-    # Write to stdout
-    li a0, 1                   # Stdout file descriptor
-    la a1, newline             # Message address
-    li a2, 1                   # Message length
-    li a7, 64                  # Syscall number for write
-    ecall
-
+count_and_save:
     ### Counting and saving ###
 
     ## Letters ##
@@ -124,6 +118,7 @@ read_loop:
     jal x1, save_count      # Save sentence count
 
 
+print:
     ### Prints ###
 
     # Sentence
@@ -158,16 +153,16 @@ read_loop:
     jal x1, print_result
 
     # Letter counts
-    print:        
+    letter_print_loop:        
         li a2, 5                        # Set string length 
         jal x1, print_result            # Print out letter and its count
         
         # Check if next letter exists
         lb t1, 0(sp)                    
-        bgt t1, zero, print
+        bgt t1, zero, letter_print_loop
 
-    jal x1, open_new
-    mv t2, a0               # Save file descriptor for new file to close it latter after writing
+    jal x1, open_new            # Open new file
+    mv t2, a0                   # Save file descriptor for new file to close it latter after writing
     jal x1, change_letters
     jal x1, write_new
 
@@ -176,13 +171,12 @@ read_loop:
     j close_file                        # Continue reading
 
 write_new:
-    
     # Write to file
     mv a1, s0                       # Buffer address
     mv a2, s2                       # Bytes to print
     li a7, 64                       # Syscall number for write
     ecall
-    bltz a0, write_error       # Exit if write failed
+    bltz a0, write_error            # Exit if write failed
     
     # Close the file
     mv a0, t2                     # File descriptor
@@ -246,7 +240,7 @@ count_letters:
     mv t1, s0
     mv t2, sp
     
-    li a0, 5                        # Space between letters
+    li a0, 5                        # Space between letters in stack
     li a1, 2                        # Space to count number
     
     beq zero, zero, loop_letters    # Go back to loop
@@ -303,7 +297,6 @@ count_letters:
     return:
         jalr x0, x1, 0
 
-
     jalr x0, x1, 0 
 
 add_letters_to_buffer:
@@ -315,15 +308,23 @@ add_letters_to_buffer:
     lowercase:
         # Save 3 bytes for storing numbers
         addi sp, sp, -1                 # Increment stack pointer    
+        addi s3, s3, 1                  # Increment stack byte count
         sb zero, 0(sp)                  # Ones  
+        
         addi sp, sp, -1                 # Increment stack pointer
+        addi s3, s3, 1                  # Increment stack byte count
         sb zero, 0(sp)                  # Tens
+        
         addi sp, sp, -1                 # Increment stack pointer
+        addi s3, s3, 1                  # Increment stack byte count
         sb zero, 0(sp)                  # Hundreds 
         
         # Save starting to characters - letter and :
         addi sp, sp, -1                 # Increment stack pointer
+        addi s3, s3, 1                  # Increment stack byte count
         sb t3, 0(sp)                    # Save : for display
+
+        addi s3, s3, 1                  # Increment stack byte count
         addi sp, sp, -1                 # Increment stack pointer
         sb t1, 0(sp)                    # Save letter
 
@@ -336,16 +337,24 @@ add_letters_to_buffer:
     uppercase:
         # Save 3 bytes for storing numbers
         addi sp, sp, -1                 # Increment stack pointer    
+        addi s3, s3, 1                  # Increment stack byte count
         sb zero, 0(sp)                  # Ones  
+
         addi sp, sp, -1                 # Increment stack pointer
+        addi s3, s3, 1                  # Increment stack byte count
         sb zero, 0(sp)                  # Tens
+
         addi sp, sp, -1                 # Increment stack pointer
+        addi s3, s3, 1                  # Increment stack byte count
         sb zero, 0(sp)                  # Hundreds 
         
         # Save starting to characters - letter and :
         addi sp, sp, -1                 # Increment stack pointer
+        addi s3, s3, 1                  # Increment stack byte count
         sb t3, 0(sp)                    # Save : for display
+
         addi sp, sp, -1                 # Increment stack pointer
+        addi s3, s3, 1                  # Increment stack byte count
         sb t1, 0(sp)                    # Save letter
 
         addi t1, t1, -1                 # Go backwards from Z to A
@@ -377,7 +386,6 @@ print_result:
     li a2, 1                            # Message length
     li a7, 64                           # Syscall number for write
     ecall
-
 
     jalr x0, x1, 0
 
