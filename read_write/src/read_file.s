@@ -76,7 +76,7 @@ count_and_save:
     # OVERFLOW OCCURS
     update_count_values:
         addi t0, t0, 2                  # Get count for letter saved in third byte
-        lb a0, 0(t0)                    # Load count value
+        lbu a0, 0(t0)                   # Load unsigned count value to account for 255 chars
         jal x1, save_count              # Save it in ascii format value -> [hundreds][tens][ones]
 
         addi t2, t2, -1                 # Keep track of letter count already converted
@@ -255,7 +255,7 @@ count_letters:
         add t2, sp, t0                   # Get letter in place
         add t2, t2, a1                   # Get count number
 
-        lbu t3, 0(t2)                     # Load value
+        lb t3, 0(t2)                     # Load value
 
         addi t3, t3, 1                   # Increment letters count value
         sb t3, 0(t2)                     # Save it back
@@ -269,7 +269,7 @@ count_letters:
         add t2, sp, t0                   # Get letter in place
         add t2, t2, a1                   # Get count number
 
-        lbu t3, 0(t2)                     # Load value
+        lb t3, 0(t2)                     # Load value
 
         addi t3, t3, 1                   # Increment letters count value
         sb t3, 0(t2)                     # Save it back
