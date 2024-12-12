@@ -1,6 +1,9 @@
 run: read_file
-	# qemu-riscv64 ./read_file
-	./read_file
+	@if command -v qemu-riscv64 > /dev/null 2>&1; then\
+		qemu-riscv64 ./read_file; \
+	else \
+		./read_file; \
+	fi
 	
 qemu: read_file
 	qemu-riscv64-static -g 1234 read_file
